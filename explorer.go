@@ -36,6 +36,7 @@ type ExplorerApi interface {
 	GetBlock(height uint64) (*Block, error)
 	GetTx(hash crypto.Hash) (*FullTx, error)
 	SubmitTx(signedTx string) (*TxResult, error)
+	GetJSON(fullURL string, dest interface{}) error
 }
 
 const explorerPathPrefix = "/api/explorer/v1/"
