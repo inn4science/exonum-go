@@ -29,16 +29,15 @@ type URL struct {
 const slash = "/"
 
 func (URL) New(rawURL string) (URL, error) {
-	var s string
-	j := URL{}
-	u, err := url.Parse(s)
+	newUrl := URL{}
+	u, err := url.Parse(rawURL)
 	if err != nil {
-		return j, err
+		return newUrl, err
 	}
 
-	j.URL = u
-	j.basePath = strings.TrimSuffix(u.Path, slash)
-	return j, err
+	newUrl.URL = u
+	newUrl.basePath = strings.TrimSuffix(u.Path, slash)
+	return newUrl, err
 }
 
 func (j *URL) SetBasePath(path string) *URL {
