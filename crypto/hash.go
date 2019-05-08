@@ -68,3 +68,8 @@ func (key *Hash) Decode(str string) (err error) {
 func (key *Hash) Encode() string {
 	return hex.EncodeToString(key.Data)
 }
+
+// Encode `Hash` into hex string.
+func (key *Hash) String() string {
+	return key.Encode()
+}

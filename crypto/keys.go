@@ -85,6 +85,11 @@ func (key *SecretKey) Sign(data []byte) Signature {
 	return ed25519.Sign(key.ToPrivate(), data)
 }
 
+// Encode `SecretKey` into hex string.
+func (key *SecretKey) String() string {
+	return key.Encode()
+}
+
 // PublicKey wrapper on top of `exonum.PublicKey` and  `ed25519.PublicKey`
 type PublicKey struct {
 	types.PublicKey
@@ -140,6 +145,11 @@ func (key *PublicKey) Verify(data []byte, signature Signature) bool {
 	return ed25519.Verify(key.ToPublic(), data, signature)
 }
 
+// Encode `PublicKey` into hex string.
+func (key *PublicKey) String() string {
+	return key.Encode()
+}
+
 type Signature []byte
 
 // FromString returns new `Signature` decoded from hex string.
@@ -174,4 +184,9 @@ func (key *Signature) Decode(str string) error {
 // Encode `Signature` into hex string.
 func (key *Signature) Encode() string {
 	return hex.EncodeToString([]byte(*key))
+}
+
+// Encode `Signature` into hex string.
+func (key *Signature) String() string {
+	return key.Encode()
 }
