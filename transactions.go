@@ -76,8 +76,6 @@ func (ServiceTx) New(schema Schema, author crypto.PublicKey, serviceID uint16, m
 }
 
 func (tx *ServiceTx) Serialize() ([]byte, error) {
-	var err error
-
 	sidBytes := make([]byte, 2)
 	binary.LittleEndian.PutUint16(sidBytes, tx.ServiceID)
 	midBytes := make([]byte, 2)
@@ -85,21 +83,20 @@ func (tx *ServiceTx) Serialize() ([]byte, error) {
 
 	buf := make([]byte, 0)
 	buf = append(tx.author.Data, tx.class)
-	buf = append(buf, tx.class)
-	buf = append(buf, tx.class)
 	buf = append(buf, tx.messageType)
 	buf = append(buf, sidBytes...)
 	buf = append(buf, midBytes...)
-	buf, err = tx.schema.XXX_Marshal(buf, true)
+	bytes, err := proto.Marshal(tx.schema)
 	if err != nil {
 		return nil, err
 	}
+	buf = append(buf, bytes...)
 
 	if tx.Signature != nil {
 		buf = append(buf, tx.Signature...)
 	}
 
-	return tx.schema.XXX_Marshal(buf, true)
+	return buf, nil
 }
 
 // Sign serialized `ServiceTx` with passed key.
