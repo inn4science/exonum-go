@@ -39,10 +39,10 @@ type ExplorerApi interface {
 	GetJSON(fullURL string, dest interface{}) error
 }
 
-const explorerPathPrefix = "/api/explorer/v1/"
+const explorerPathPrefix = "/api/explorer/v1"
 
 var servicePathTemplate = func(service string) string {
-	return fmt.Sprintf("/api/services/%s/v1/", service)
+	return fmt.Sprintf("/api/services/%s/v1", service)
 }
 
 type explorerApi struct {
