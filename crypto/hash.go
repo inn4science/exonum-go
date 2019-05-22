@@ -18,8 +18,10 @@ package crypto
 
 import (
 	"crypto/sha256"
+	"database/sql/driver"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 
 	"github.com/inn4science/exonum-go/types"
 )
@@ -56,6 +58,20 @@ func (key *Hash) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return key.Decode(s)
+}
+
+// Value is generated so Hash satisfies db row driver.Scanner.
+func (key *Hash) Scan(src interface{}) error {
+	switch v := src.(type) {
+	case string:
+		return key.Decode(v)
+	}
+	return errors.New("hash: invalid type")
+}
+
+// Value is generated so Hash satisfies db row driver.Valuer.
+func (key Hash) Value() (driver.Value, error) {
+	return key.Encode(), nil
 }
 
 // Decode `Hash` from hex string.

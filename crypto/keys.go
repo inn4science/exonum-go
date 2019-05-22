@@ -17,8 +17,10 @@
 package crypto
 
 import (
+	"database/sql/driver"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 
 	"github.com/inn4science/exonum-go/types"
 	"golang.org/x/crypto/ed25519"
@@ -56,6 +58,20 @@ func (key *SecretKey) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return key.Decode(s)
+}
+
+// Value is generated so SecretKey satisfies db row driver.Scanner.
+func (key *SecretKey) Scan(src interface{}) error {
+	switch v := src.(type) {
+	case string:
+		return key.Decode(v)
+	}
+	return errors.New("SecretKey: invalid type")
+}
+
+// Value is generated so SecretKey satisfies db row driver.Valuer.
+func (key SecretKey) Value() (driver.Value, error) {
+	return key.Encode(), nil
 }
 
 // Decode `SecretKey` from hex string.
@@ -124,6 +140,20 @@ func (key *PublicKey) MarshalJSON() ([]byte, error) {
 	return json.Marshal(key.Encode())
 }
 
+// Value is generated so PublicKey satisfies db row driver.Scanner.
+func (key *PublicKey) Scan(src interface{}) error {
+	switch v := src.(type) {
+	case string:
+		return key.Decode(v)
+	}
+	return errors.New("PublicKey: invalid type")
+}
+
+// Value is generated so PublicKey satisfies db row driver.Valuer.
+func (key PublicKey) Value() (driver.Value, error) {
+	return key.Encode(), nil
+}
+
 // Decode `PublicKey` from hex string.
 func (key *PublicKey) Decode(str string) (err error) {
 	key.Data, err = hex.DecodeString(str)
@@ -172,6 +202,20 @@ func (key *Signature) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return key.Decode(s)
+}
+
+// Value is generated so Signature satisfies db row driver.Scanner.
+func (key *Signature) Scan(src interface{}) error {
+	switch v := src.(type) {
+	case string:
+		return key.Decode(v)
+	}
+	return errors.New("Signature: invalid type")
+}
+
+// Value is generated so Signature satisfies db row driver.Valuer.
+func (key Signature) Value() (driver.Value, error) {
+	return key.Encode(), nil
 }
 
 // Decode `Signature` from hex string.

@@ -50,6 +50,14 @@ func (KeyPair) Random() KeyPair {
 	}
 }
 
+func (kp *KeyPair) PublicKey() PublicKey {
+	return kp.pk
+}
+
+func (kp *KeyPair) SecretKey() SecretKey {
+	return kp.sk
+}
+
 func (kp KeyPair) Sign(data []byte) Signature {
 	return kp.sk.Sign(data)
 }
