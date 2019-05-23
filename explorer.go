@@ -132,7 +132,6 @@ func (api *explorerApi) SubmitTx(signedTx string) (*TxResult, error) {
 
 	req.Header = api.header
 	req.Header.Set("Content-Type", "application/json")
-	fmt.Println(req.Header.Get("test"))
 	resp, err := api.client.Do(req)
 	if err != nil {
 		return nil, err
