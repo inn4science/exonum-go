@@ -30,6 +30,7 @@ import (
 type ExplorerApi interface {
 	New(baseURL URL) ExplorerApi
 	SetURL(url URL) ExplorerApi
+	SetHeader(header string, value string) ExplorerApi
 	ExplorerPath(prefix string) *URL
 	ServicePath(serviceName, prefix string) *URL
 	GetBlocks(count uint32, latest uint64, skipEmptyBlocks bool, addTime bool) (*BlocksResponse, error)
@@ -48,6 +49,7 @@ var servicePathTemplate = func(service string) string {
 type explorerApi struct {
 	baseURL URL
 	client  http.Client
+	header  http.Header
 }
 
 func NewExplorerApi(baseURL URL) ExplorerApi {
@@ -58,11 +60,17 @@ func (explorerApi) New(baseURL URL) ExplorerApi {
 	return &explorerApi{
 		baseURL: baseURL,
 		client:  http.Client{Timeout: 15 * time.Second},
+		header:  make(http.Header),
 	}
 }
 
 func (api *explorerApi) SetURL(baseURL URL) ExplorerApi {
 	api.baseURL = baseURL
+	return api
+}
+
+func (api *explorerApi) SetHeader(h string, v string) ExplorerApi {
+	api.header.Set(h, v)
 	return api
 }
 
@@ -117,7 +125,15 @@ func (api *explorerApi) SubmitTx(signedTx string) (*TxResult, error) {
 		return nil, err
 	}
 
-	resp, err := api.client.Post(fullURL, "application/json", bytes.NewBuffer(rawData))
+	req, err := http.NewRequest("POST", fullURL, bytes.NewBuffer(rawData))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header = api.header
+	req.Header.Set("Content-Type", "application/json")
+	fmt.Println(req.Header.Get("test"))
+	resp, err := api.client.Do(req)
 	if err != nil {
 		return nil, err
 	}
