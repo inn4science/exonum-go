@@ -107,7 +107,7 @@ func (api *explorerApi) GetBlock(height uint64) (*Block, error) {
 
 func (api *explorerApi) GetTx(hash crypto.Hash) (*FullTx, error) {
 	val := make(url.Values)
-	val.Set("hash", fmt.Sprintf("%v", hash))
+	val.Set("hash", hash.String())
 	reqURL := api.ExplorerPath("/transactions").WithQuery(val)
 
 	result := new(FullTx)
