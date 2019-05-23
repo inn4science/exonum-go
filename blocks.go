@@ -64,7 +64,7 @@ type FullTx struct {
 	Status struct {
 		Type        string `json:"type"`
 		Code        int    `json:"code"`
-		Description int    `json:"description"`
+		Description string `json:"description"`
 	} `json:"status"`
 }
 
