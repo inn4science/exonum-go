@@ -62,7 +62,9 @@ type FullTx struct {
 		Val string `json:"val"`
 	} `json:"location_proof"`
 	Status struct {
-		Type string `json:"type"`
+		Type        string `json:"type"`
+		Code        int    `json:"code"`
+		Description int    `json:"description"`
 	} `json:"status"`
 }
 
