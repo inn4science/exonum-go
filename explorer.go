@@ -19,6 +19,7 @@ package exonum
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -33,14 +34,23 @@ type ExplorerApi interface {
 	SetHeader(header string, value string) ExplorerApi
 	ExplorerPath(prefix string) *URL
 	ServicePath(serviceName, prefix string) *URL
-	GetBlocks(count uint32, latest uint64, skipEmptyBlocks bool, addTime bool) (*BlocksResponse, error)
-	GetBlock(height uint64) (*Block, error)
-	GetTx(hash crypto.Hash) (*FullTx, error)
-	SubmitTx(signedTx string) (*TxResult, error)
-	GetJSON(fullURL string, dest interface{}) error
+	GetBlocks(count uint32, latest uint64, skipEmptyBlocks bool, addTime bool) (*BlocksResponse, ExplorerApiError)
+	GetBlock(height uint64) (*Block, ExplorerApiError)
+	GetTx(hash crypto.Hash) (*FullTx, ExplorerApiError)
+	SubmitTx(signedTx string) (*TxResult, ExplorerApiError)
+	GetJSON(fullURL string, dest interface{}) ExplorerApiError
+}
+
+type ExplorerApiError interface {
+	Error() string
+	StatusCode() int
+	Wrap(err error) ExplorerApiError
+	Unwrap() error
+	AsError() error
 }
 
 const explorerPathPrefix = "/api/explorer/v1"
+const invalidCode = "invalid status code"
 
 var servicePathTemplate = func(service string) string {
 	return fmt.Sprintf("/api/services/%s/v1", service)
@@ -50,6 +60,55 @@ type explorerApi struct {
 	baseURL URL
 	client  http.Client
 	header  http.Header
+}
+
+type explorerApiError struct {
+	message string
+	err     error
+	code    int
+}
+
+func (e *explorerApiError) Error() string {
+	if e.err != nil {
+		if len(e.message) > 0 {
+			return e.message + ": " + e.err.Error()
+		}
+		return e.err.Error()
+	}
+	return e.message
+}
+
+func (e *explorerApiError) StatusCode() int {
+	return e.code
+}
+
+func (e *explorerApiError) Wrap(err error) ExplorerApiError {
+	e.err = err
+	return e
+}
+
+func (e *explorerApiError) Unwrap() error {
+	return e.err
+}
+
+func (e *explorerApiError) AsError() error {
+	return errors.New(e.Error())
+}
+
+func NewError(msg string, statusCode int) ExplorerApiError {
+	return &explorerApiError{
+		message: msg,
+		code:    statusCode,
+	}
+}
+
+func WrapError(err error) ExplorerApiError {
+	if err == nil {
+		return nil
+	}
+	return &explorerApiError{
+		err: err,
+	}
 }
 
 func NewExplorerApi(baseURL URL) ExplorerApi {
@@ -82,7 +141,7 @@ func (api *explorerApi) ServicePath(serviceName, prefix string) *URL {
 	return api.baseURL.SetBasePath(servicePathTemplate(serviceName)).SetPath(prefix)
 }
 
-func (api *explorerApi) GetBlocks(count uint32, latest uint64, skipEmptyBlocks bool, addTime bool) (*BlocksResponse, error) {
+func (api *explorerApi) GetBlocks(count uint32, latest uint64, skipEmptyBlocks bool, addTime bool) (*BlocksResponse, ExplorerApiError) {
 	val := make(url.Values)
 	val.Set("count", fmt.Sprintf("%v", count))
 	val.Set("latest", fmt.Sprintf("%v", latest))
@@ -95,7 +154,7 @@ func (api *explorerApi) GetBlocks(count uint32, latest uint64, skipEmptyBlocks b
 	return result, err
 }
 
-func (api *explorerApi) GetBlock(height uint64) (*Block, error) {
+func (api *explorerApi) GetBlock(height uint64) (*Block, ExplorerApiError) {
 	val := make(url.Values)
 	val.Set("height", fmt.Sprintf("%v", height))
 	reqURL := api.ExplorerPath("/block").WithQuery(val)
@@ -105,7 +164,7 @@ func (api *explorerApi) GetBlock(height uint64) (*Block, error) {
 	return result, err
 }
 
-func (api *explorerApi) GetTx(hash crypto.Hash) (*FullTx, error) {
+func (api *explorerApi) GetTx(hash crypto.Hash) (*FullTx, ExplorerApiError) {
 	val := make(url.Values)
 	val.Set("hash", hash.String())
 	reqURL := api.ExplorerPath("/transactions").WithQuery(val)
@@ -115,38 +174,43 @@ func (api *explorerApi) GetTx(hash crypto.Hash) (*FullTx, error) {
 	return result, err
 }
 
-func (api *explorerApi) SubmitTx(signedTx string) (*TxResult, error) {
+func (api *explorerApi) SubmitTx(signedTx string) (*TxResult, ExplorerApiError) {
 	fullURL := api.ExplorerPath("/transactions").String()
 
 	rawData, err := json.Marshal(map[string]string{
 		"tx_body": signedTx,
 	})
 	if err != nil {
-		return nil, err
+		return nil, WrapError(err)
 	}
 
 	req, err := http.NewRequest("POST", fullURL, bytes.NewBuffer(rawData))
 	if err != nil {
-		return nil, err
+		return nil, WrapError(err)
 	}
 
 	req.Header = api.header
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := api.client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, WrapError(err)
+	}
+	if resp.StatusCode >= 400 {
+		return nil, NewError(invalidCode, resp.StatusCode)
 	}
 
 	result := new(TxResult)
 	err = json.NewDecoder(resp.Body).Decode(result)
-	return result, err
+	return result, WrapError(err)
 }
 
-func (api *explorerApi) GetJSON(fullURL string, dest interface{}) error {
+func (api *explorerApi) GetJSON(fullURL string, dest interface{}) ExplorerApiError {
 	resp, err := api.client.Get(fullURL)
 	if err != nil {
-		return err
+		return WrapError(err)
 	}
-
-	return json.NewDecoder(resp.Body).Decode(dest)
+	if resp.StatusCode >= 400 {
+		return NewError(invalidCode, resp.StatusCode)
+	}
+	return WrapError(json.NewDecoder(resp.Body).Decode(dest))
 }
