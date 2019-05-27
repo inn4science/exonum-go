@@ -99,6 +99,49 @@ func (tx *ServiceTx) Serialize() ([]byte, error) {
 	return buf, nil
 }
 
+func (ServiceTx) DecodeSignedTx(rawTx string, schema Schema) (ServiceTx, error) {
+	txBytes, err := hex.DecodeString(rawTx)
+	if err != nil {
+		return ServiceTx{}, err
+	}
+
+	data := txBytes[:len(txBytes)-64]
+
+	authorPk, err := crypto.PublicKey{}.FromString(hex.EncodeToString(data[:32]))
+	if err != nil {
+		return ServiceTx{}, err
+	}
+
+	class := data[32:33]
+	messageType := data[33:34]
+	sidBytes := data[34:36]
+	midBytes := data[36:38]
+
+	err = proto.Unmarshal(data[38:], schema)
+	if err != nil {
+		return ServiceTx{}, err
+	}
+
+	message := Message{
+		schema:      schema,
+		author:      authorPk,
+		class:       uint8(class[0]),
+		messageType: uint8(messageType[0]),
+	}
+
+	signature, err := crypto.Signature{}.FromString(hex.EncodeToString(txBytes[len(txBytes)-64:]))
+	if err != nil {
+		return ServiceTx{}, err
+	}
+
+	return ServiceTx{
+		Message:   message,
+		ServiceID: binary.LittleEndian.Uint16(sidBytes),
+		MessageID: binary.LittleEndian.Uint16(midBytes),
+		Signature: signature,
+	}, nil
+}
+
 // Sign serialized `ServiceTx` with passed key.
 func (tx *ServiceTx) Sign(key crypto.SecretKey) (crypto.Signature, error) {
 	data, err := tx.Serialize()

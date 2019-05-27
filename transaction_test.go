@@ -2,6 +2,7 @@ package exonum
 
 import (
 	"encoding/hex"
+	"fmt"
 	"testing"
 
 	"github.com/inn4science/exonum-go/crypto"
@@ -51,4 +52,34 @@ func TestServiceTx_IntoSignedTx(t *testing.T) {
 
 	assert.Equal(t, SYSTEM_TX, signedTx)
 	assert.Equal(t, SYSTEM_TX_HASH, hex.EncodeToString(h.Data))
+}
+
+func TestServiceTx_DecodeSignedTx(t *testing.T) {
+	schema := &testTypes.CreateAccount{}
+	exonumTx, err := ServiceTx{}.DecodeSignedTx(SYSTEM_TX, schema)
+	assert.NoError(t, err)
+
+	// expected data
+	systemKp, err := crypto.SecretKey{}.FromString("b3bae303e3c13d33305d3ca6c1f55d76b80bc517d9f131dc3bc05fc584a5441d671067a235785e9150fddac0f2f5644b298b992d76c0eae213cd2a8e7894af5d")
+	assert.NoError(t, err)
+	systemPk := systemKp.GetPublic()
+
+	accountUIDData, err := hex.DecodeString(SYSTEM_UID)
+	assert.NoError(t, err)
+
+	expectedSchema := &testTypes.CreateAccount{
+		Meta:        &testTypes.TxMeta{ProtocolVer: 1, TxType: testTypes.TransactionType_TxCreateAccount, TxVer: 1},
+		AccountUid:  &types.Hash{Data: accountUIDData},
+		AccountType: testTypes.AccountType_SYSTEM,
+	}
+
+	assert.Equal(t, ServiceId, int(exonumTx.ServiceID))
+	assert.Equal(t, int(testTypes.TransactionType_TxCreateAccount), int(exonumTx.MessageID))
+
+	assert.Equal(t, expectedSchema, exonumTx.Message.schema)
+	assert.Equal(t, systemPk.String(), exonumTx.Message.author.String())
+	assert.Equal(t, TransactionClass, int(exonumTx.Message.class))
+	assert.Equal(t, TransactionClass, int(exonumTx.Message.messageType))
+
+	fmt.Println("exonumTx.Signature", exonumTx.Signature.String())
 }
