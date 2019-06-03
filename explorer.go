@@ -214,3 +214,14 @@ func (api *explorerApi) GetJSON(fullURL string, dest interface{}) ExplorerApiErr
 	}
 	return WrapError(json.NewDecoder(resp.Body).Decode(dest))
 }
+
+func (api *explorerApi) PostJSON(fullURL string, body []byte, dest interface{}) ExplorerApiError {
+	resp, err := api.client.Post(fullURL, "application/json", bytes.NewReader(body))
+	if err != nil {
+		return WrapError(err)
+	}
+	if resp.StatusCode >= 400 {
+		return NewError(invalidCode, resp.StatusCode)
+	}
+	return WrapError(json.NewDecoder(resp.Body).Decode(dest))
+}
