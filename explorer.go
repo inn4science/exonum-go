@@ -39,6 +39,7 @@ type ExplorerApi interface {
 	GetTx(hash crypto.Hash) (*FullTx, ExplorerApiError)
 	SubmitTx(signedTx string) (*TxResult, ExplorerApiError)
 	GetJSON(fullURL string, dest interface{}) ExplorerApiError
+	PostJSON(fullURL string, body []byte, dest interface{}) ExplorerApiError
 }
 
 type ExplorerApiError interface {
