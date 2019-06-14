@@ -117,10 +117,12 @@ func NewExplorerApi(baseURL URL) ExplorerApi {
 }
 
 func (explorerApi) New(baseURL URL) ExplorerApi {
+	header := make(http.Header)
+	header.Set("Content-Type", "application/json")
 	return &explorerApi{
 		baseURL: baseURL,
 		client:  http.Client{Timeout: 15 * time.Second},
-		header:  make(http.Header),
+		header:  header,
 	}
 }
 
@@ -191,7 +193,6 @@ func (api *explorerApi) SubmitTx(signedTx string) (*TxResult, ExplorerApiError) 
 	}
 
 	req.Header = api.header
-	req.Header.Set("Content-Type", "application/json")
 	resp, err := api.client.Do(req)
 	if err != nil {
 		return nil, WrapError(err)

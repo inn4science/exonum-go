@@ -9,7 +9,6 @@ import (
 )
 
 const TestURL = "http://127.0.0.1:8201"
-const DevURL = "http://116.202.29.41:8201"
 
 func TestExplorerApi_New(t *testing.T) {
 	url, err := URL{}.New(TestURL)
@@ -22,7 +21,7 @@ func TestExplorerApi_New(t *testing.T) {
 }
 
 func TestGetTx(t *testing.T) {
-	url, err := URL{}.New(DevURL)
+	url, err := URL{}.New(TestURL)
 	assert.NoError(t, err)
 
 	explorerApi := NewExplorerApi(url)
