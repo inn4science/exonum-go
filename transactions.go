@@ -19,6 +19,7 @@ package exonum
 import (
 	"encoding/binary"
 	"encoding/hex"
+	"errors"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/inn4science/exonum-go/crypto"
@@ -105,6 +106,11 @@ func (ServiceTx) DecodeSignedTx(rawTx string, schema Schema) (ServiceTx, error) 
 		return ServiceTx{}, err
 	}
 
+	if len(txBytes) <= 102 {
+		return ServiceTx{}, errors.New("raw transaction is not valid")
+	}
+
+	signatureByte := txBytes[len(txBytes)-64:]
 	data := txBytes[:len(txBytes)-64]
 
 	authorPk, err := crypto.PublicKey{}.FromString(hex.EncodeToString(data[:32]))
@@ -129,7 +135,7 @@ func (ServiceTx) DecodeSignedTx(rawTx string, schema Schema) (ServiceTx, error) 
 		messageType: uint8(messageType[0]),
 	}
 
-	signature, err := crypto.Signature{}.FromString(hex.EncodeToString(txBytes[len(txBytes)-64:]))
+	signature, err := crypto.Signature{}.FromString(hex.EncodeToString(signatureByte))
 	if err != nil {
 		return ServiceTx{}, err
 	}

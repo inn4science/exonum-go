@@ -2,7 +2,6 @@ package exonum
 
 import (
 	"encoding/hex"
-	"fmt"
 	"testing"
 
 	"github.com/inn4science/exonum-go/crypto"
@@ -81,5 +80,7 @@ func TestServiceTx_DecodeSignedTx(t *testing.T) {
 	assert.Equal(t, TransactionClass, int(exonumTx.Message.class))
 	assert.Equal(t, TransactionClass, int(exonumTx.Message.messageType))
 
-	fmt.Println("exonumTx.Signature", exonumTx.Signature.String())
+	_, err = ServiceTx{}.DecodeSignedTx(SYSTEM_TX[0:12], schema)
+	assert.Error(t, err)
+
 }
