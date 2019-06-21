@@ -191,12 +191,15 @@ func (api *explorerApi) SubmitTx(signedTx string) (*TxResult, ExplorerApiError) 
 	if err != nil {
 		return nil, WrapError(err)
 	}
+	req.Close = true
 
 	req.Header = api.header
 	resp, err := api.client.Do(req)
 	if err != nil {
 		return nil, WrapError(err)
 	}
+	defer resp.Body.Close()
+
 	if resp.StatusCode >= 400 {
 		return nil, NewError(invalidCode, resp.StatusCode)
 	}
