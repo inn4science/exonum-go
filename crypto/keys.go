@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  2019. The Inn4Science Team
+ * Copyright (c) 2018 - 2019. The Inn4Science Team
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,6 +72,31 @@ func (key *SecretKey) Scan(src interface{}) error {
 // Value is generated so SecretKey satisfies db row driver.Valuer.
 func (key SecretKey) Value() (driver.Value, error) {
 	return key.Encode(), nil
+}
+
+// MarshalYAML convert `SecretKey` into hex string and than into yaml.
+func (key *SecretKey) MarshalYAML() (interface{}, error) {
+	return key.Encode(), nil
+}
+
+// UnmarshalYAML unmarshal `SecretKey` from yaml as a hex string and `Decode`.
+func (key *SecretKey) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var stringValue string
+	err := unmarshal(&stringValue)
+	if err != nil {
+		return err
+	}
+	return key.Decode(stringValue)
+}
+
+// MarshalText convert `SecretKey` into hex string and than into textual representation.
+func (key *SecretKey) MarshalText() (text []byte, err error) {
+	return []byte(key.Encode()), nil
+}
+
+// UnmarshalText unmarshal `SecretKey` from textual representation as a hex string and `Decode`.
+func (key *SecretKey) UnmarshalText(text []byte) error {
+	return key.Decode(string(text))
 }
 
 // Decode `SecretKey` from hex string.
@@ -154,6 +179,31 @@ func (key PublicKey) Value() (driver.Value, error) {
 	return key.Encode(), nil
 }
 
+// MarshalYAML convert `PublicKey` into hex string and than into yaml.
+func (key *PublicKey) MarshalYAML() (interface{}, error) {
+	return key.Encode(), nil
+}
+
+// UnmarshalYAML unmarshal `PublicKey` from yaml as a hex string and `Decode`.
+func (key *PublicKey) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var stringValue string
+	err := unmarshal(&stringValue)
+	if err != nil {
+		return err
+	}
+	return key.Decode(stringValue)
+}
+
+// MarshalText convert `PublicKey` into hex string and than into textual representation.
+func (key *PublicKey) MarshalText() (text []byte, err error) {
+	return []byte(key.Encode()), nil
+}
+
+// UnmarshalText unmarshal `PublicKey` from textual representation as a hex string and `Decode`.
+func (key *PublicKey) UnmarshalText(text []byte) error {
+	return key.Decode(string(text))
+}
+
 // Decode `PublicKey` from hex string.
 func (key *PublicKey) Decode(str string) (err error) {
 	key.Data, err = hex.DecodeString(str)
@@ -210,12 +260,37 @@ func (key *Signature) Scan(src interface{}) error {
 	case string:
 		return key.Decode(v)
 	}
-	return errors.New("Signature: invalid type")
+	return errors.New("signature: invalid type")
 }
 
 // Value is generated so Signature satisfies db row driver.Valuer.
 func (key Signature) Value() (driver.Value, error) {
 	return key.Encode(), nil
+}
+
+// MarshalYAML convert `Signature` into hex string and than into yaml.
+func (key *Signature) MarshalYAML() (interface{}, error) {
+	return key.Encode(), nil
+}
+
+// UnmarshalYAML unmarshal `Signature` from yaml as a hex string and `Decode`.
+func (key *Signature) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var stringValue string
+	err := unmarshal(&stringValue)
+	if err != nil {
+		return err
+	}
+	return key.Decode(stringValue)
+}
+
+// MarshalText convert `Signature` into hex string and than into textual representation.
+func (key *Signature) MarshalText() (text []byte, err error) {
+	return []byte(key.Encode()), nil
+}
+
+// UnmarshalText unmarshal `Signature` from textual representation as a hex string and `Decode`.
+func (key *Signature) UnmarshalText(text []byte) error {
+	return key.Decode(string(text))
 }
 
 // Decode `Signature` from hex string.

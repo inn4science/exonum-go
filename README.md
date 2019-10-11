@@ -12,6 +12,7 @@ A Go library to work with Exonum blockchain .
   * [Define transaction](#define-transaction)
   * [Sign transaction](#sign-transaction)
   * [Send transaction](#send-transaction)
+* [API Client](#api-client)  
 * [Cryptographic proofs](#cryptographic-proofs)
   * [Merkle tree proof](#merkle-tree-proof)
   * [Map proof](#map-proof)
@@ -22,6 +23,7 @@ A Go library to work with Exonum blockchain .
 * [Changelog](#changelog)
 * [License](#license)
 
+> Will be soon
 
 ## Changelog
 

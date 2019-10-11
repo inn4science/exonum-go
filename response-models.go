@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  2019. The Inn4Science Team
+ * Copyright (c) 2018 - 2019. The Inn4Science Team
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,20 +23,26 @@ import (
 	"github.com/inn4science/exonum-go/crypto"
 )
 
-type Block struct {
-	ProposerID int    `json:"proposer_id"`
-	Height     int64  `json:"height"`
-	TxCount    int64  `json:"tx_count"`
-	PrevHash   string `json:"prev_hash"`
-	TxHash     string `json:"tx_hash"`
-	StateHash  string `json:"state_hash"`
+type TxHashInfo struct {
+	TxHash    crypto.Hash `json:"tx_hash"`
+	ServiceID uint        `json:"service_id"`
 }
 
-type BlockResponse struct {
-	Block      Block         `json:"block"`
-	PreCommits []string      `json:"precommits"`
-	Txs        []interface{} `json:"txs"`
-	Time       time.Time     `json:"time"`
+type Block struct {
+	ProposerID uint      `json:"proposer_id"`
+	Height     uint64    `json:"height"`
+	TxCount    uint64    `json:"tx_count"`
+	PrevHash   string    `json:"prev_hash"`
+	TxHash     string    `json:"tx_hash"`
+	StateHash  string    `json:"state_hash"`
+	Time       time.Time `json:"time"`
+}
+
+type FullBlock struct {
+	Block
+	PreCommits []string     `json:"precommits"`
+	Txs        []TxHashInfo `json:"txs"`
+	Time       time.Time    `json:"time"`
 }
 
 type BlocksResponse struct {
@@ -44,8 +50,7 @@ type BlocksResponse struct {
 		Start int `json:"start"`
 		End   int `json:"end"`
 	} `json:"range"`
-	Blocks []Block     `json:"blocks"`
-	Times  []time.Time `json:"times"`
+	Blocks []Block `json:"blocks"`
 }
 
 type FullTx struct {
@@ -70,4 +75,24 @@ type FullTx struct {
 
 type TxResult struct {
 	TxHash crypto.Hash `json:"tx_hash"`
+}
+
+type ServiceInfo struct {
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
+}
+
+type ServiceList struct {
+	Services []ServiceInfo `json:"services"`
+}
+
+type HealthCheck struct {
+	ConsensusStatus string `json:"consensus_status"`
+	ConnectedPeers  uint   `json:"connected_peers"`
+}
+
+type Stats struct {
+	TxPoolSize  uint `json:"tx_pool_size"`
+	TxCount     uint `json:"tx_count"`
+	TxCacheSize uint `json:"tx_cache_size"`
 }

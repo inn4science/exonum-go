@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  2019. The Inn4Science Team
+ * Copyright (c) 2018 - 2019. The Inn4Science Team
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,12 +32,22 @@ type ExplorerApi interface {
 	New(baseURL URL) ExplorerApi
 	SetURL(url URL) ExplorerApi
 	SetHeader(header string, value string) ExplorerApi
+
+	SystemPath(prefix string) *URL
 	ExplorerPath(prefix string) *URL
 	ServicePath(serviceName, prefix string) *URL
+
+	Stats() (*Stats, ExplorerApiError)
+	Services() (*ServiceList, ExplorerApiError)
+	HealthCheck() (*HealthCheck, ExplorerApiError)
+
 	GetBlocks(count uint32, latest uint64, skipEmptyBlocks bool, addTime bool) (*BlocksResponse, ExplorerApiError)
-	GetBlock(height uint64) (*Block, ExplorerApiError)
+	GetBlock(height uint64) (*FullBlock, ExplorerApiError)
+	LastBlock() (*FullBlock, ExplorerApiError)
+
 	GetTx(hash crypto.Hash) (*FullTx, ExplorerApiError)
 	SubmitTx(signedTx string) (*TxResult, ExplorerApiError)
+
 	GetJSON(fullURL string, dest interface{}) ExplorerApiError
 	PostJSON(fullURL string, body []byte, dest interface{}) ExplorerApiError
 }
@@ -51,6 +61,7 @@ type ExplorerApiError interface {
 }
 
 const explorerPathPrefix = "/api/explorer/v1"
+const systemPathPrefix = "/api/system/v1"
 const invalidCode = "invalid status code"
 
 var servicePathTemplate = func(service string) string {
@@ -136,6 +147,10 @@ func (api *explorerApi) SetHeader(h string, v string) ExplorerApi {
 	return api
 }
 
+func (api *explorerApi) SystemPath(prefix string) *URL {
+	return api.baseURL.SetBasePath(systemPathPrefix).SetPath(prefix)
+}
+
 func (api *explorerApi) ExplorerPath(prefix string) *URL {
 	return api.baseURL.SetBasePath(explorerPathPrefix).SetPath(prefix)
 }
@@ -144,10 +159,60 @@ func (api *explorerApi) ServicePath(serviceName, prefix string) *URL {
 	return api.baseURL.SetBasePath(servicePathTemplate(serviceName)).SetPath(prefix)
 }
 
+func (api *explorerApi) Stats() (*Stats, ExplorerApiError) {
+	reqURL := api.SystemPath("/stats").String()
+
+	result := new(Stats)
+	err := api.GetJSON(reqURL, result)
+	return result, err
+}
+
+func (api *explorerApi) Services() (*ServiceList, ExplorerApiError) {
+	reqURL := api.SystemPath("/services").String()
+
+	result := new(ServiceList)
+	err := api.GetJSON(reqURL, result)
+	return result, err
+}
+
+func (api *explorerApi) HealthCheck() (*HealthCheck, ExplorerApiError) {
+	reqURL := api.SystemPath("/healthcheck").String()
+
+	result := new(HealthCheck)
+	err := api.GetJSON(reqURL, result)
+	return result, err
+}
+
+func (api *explorerApi) LastBlock() (*FullBlock, ExplorerApiError) {
+	val := make(url.Values)
+	val.Set("count", fmt.Sprintf("%v", 1))
+	val.Set("add_blocks_time", "true")
+	reqURL := api.ExplorerPath("/blocks").WithQuery(val)
+
+	result := new(BlocksResponse)
+	err := api.GetJSON(reqURL, result)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(result.Blocks) < 1 {
+		result.Blocks = []Block{Block{}}
+	}
+
+	height := result.Blocks[0].Height
+	block, err := api.GetBlock(height)
+
+	return block, err
+}
+
 func (api *explorerApi) GetBlocks(count uint32, latest uint64, skipEmptyBlocks bool, addTime bool) (*BlocksResponse, ExplorerApiError) {
 	val := make(url.Values)
 	val.Set("count", fmt.Sprintf("%v", count))
-	val.Set("latest", fmt.Sprintf("%v", latest))
+
+	if latest > 0 {
+		val.Set("latest", fmt.Sprintf("%v", latest))
+	}
+
 	val.Set("skip_empty_blocks", fmt.Sprintf("%v", skipEmptyBlocks))
 	val.Set("add_blocks_time", fmt.Sprintf("%v", addTime))
 	reqURL := api.ExplorerPath("/blocks").WithQuery(val)
@@ -157,12 +222,12 @@ func (api *explorerApi) GetBlocks(count uint32, latest uint64, skipEmptyBlocks b
 	return result, err
 }
 
-func (api *explorerApi) GetBlock(height uint64) (*Block, ExplorerApiError) {
+func (api *explorerApi) GetBlock(height uint64) (*FullBlock, ExplorerApiError) {
 	val := make(url.Values)
 	val.Set("height", fmt.Sprintf("%v", height))
 	reqURL := api.ExplorerPath("/block").WithQuery(val)
 
-	result := new(Block)
+	result := new(FullBlock)
 	err := api.GetJSON(reqURL, result)
 	return result, err
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  2019. The Inn4Science Team
+ * Copyright (c) 2018 - 2019. The Inn4Science Team
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,28 +24,41 @@ import (
 )
 
 type KeyPair struct {
-	sk SecretKey
+	sk *SecretKey
 	pk PublicKey
 }
 
 func (KeyPair) New(key PublicKey, secretKey SecretKey) KeyPair {
 	return KeyPair{
-		sk: secretKey,
+		sk: &secretKey,
 		pk: key,
 	}
 }
 
 func (KeyPair) FromSecret(secretKey SecretKey) KeyPair {
 	return KeyPair{
-		sk: secretKey,
+		sk: &secretKey,
 		pk: secretKey.GetPublic(),
 	}
 }
 
+func (KeyPair) FromSecretString(secretKeyStr string) (KeyPair, error) {
+	secretKey, err := SecretKey{}.FromString(secretKeyStr)
+	if err != nil {
+		return KeyPair{}, nil
+	}
+	return KeyPair{
+		sk: &secretKey,
+		pk: secretKey.GetPublic(),
+	}, nil
+}
+
 func (KeyPair) Random() KeyPair {
 	public, secret, _ := ed25519.GenerateKey(rand.Reader)
+	secretKey := SecretKey{}.New(secret)
+
 	return KeyPair{
-		sk: SecretKey{}.New(secret),
+		sk: &secretKey,
 		pk: PublicKey{}.New(public),
 	}
 }
@@ -54,7 +67,7 @@ func (kp *KeyPair) PublicKey() PublicKey {
 	return kp.pk
 }
 
-func (kp *KeyPair) SecretKey() SecretKey {
+func (kp *KeyPair) SecretKey() *SecretKey {
 	return kp.sk
 }
 

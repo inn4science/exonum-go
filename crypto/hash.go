@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  2019. The Inn4Science Team
+ * Copyright (c) 2018 - 2019. The Inn4Science Team
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import (
 	"github.com/inn4science/exonum-go/types"
 )
 
+// Hash is a type-wrapper for exonum.Hash; hex-encoded result of the SHA256.
+// Wrappers implements
 type Hash struct {
 	types.Hash
 }
@@ -72,6 +74,31 @@ func (key *Hash) Scan(src interface{}) error {
 // Value is generated so Hash satisfies db row driver.Valuer.
 func (key Hash) Value() (driver.Value, error) {
 	return key.Encode(), nil
+}
+
+// MarshalYAML convert `Hash` into hex string and than into yaml.
+func (key *Hash) MarshalYAML() (interface{}, error) {
+	return key.Encode(), nil
+}
+
+// UnmarshalYAML unmarshal `Hash` from yaml as a hex string and `Decode`.
+func (key *Hash) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var stringValue string
+	err := unmarshal(&stringValue)
+	if err != nil {
+		return err
+	}
+	return key.Decode(stringValue)
+}
+
+// MarshalText convert `Hash` into hex string and than into textual representation.
+func (key *Hash) MarshalText() (text []byte, err error) {
+	return []byte(key.Encode()), nil
+}
+
+// UnmarshalText unmarshal `Hash` from textual representation as a hex string and `Decode`.
+func (key *Hash) UnmarshalText(text []byte) error {
+	return key.Decode(string(text))
 }
 
 // Decode `Hash` from hex string.

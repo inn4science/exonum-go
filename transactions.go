@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  2019. The Inn4Science Team
+ * Copyright (c) 2018 - 2019. The Inn4Science Team
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,7 @@ type ServiceTx struct {
 	ServiceID uint16           `json:"service_id"`
 	MessageID uint16           `json:"message_id"`
 	Signature crypto.Signature `json:"signature"`
+	signed    bool
 	signedTx  []byte
 }
 
@@ -150,18 +151,28 @@ func (ServiceTx) DecodeSignedTx(rawTx string, schema Schema) (ServiceTx, error) 
 
 // Sign serialized `ServiceTx` with passed key.
 func (tx *ServiceTx) Sign(key crypto.SecretKey) (crypto.Signature, error) {
+	tx.signed = false
+	tx.Signature = nil
+
 	data, err := tx.Serialize()
 	if err != nil {
 		return nil, err
 	}
 
-	return key.Sign(data), nil
+	signature := key.Sign(data)
+	tx.signedTx = append(data, signature...)
+	tx.signed = true
+	return signature, nil
 }
 
 // Hash creates SHA256 of `ServiceTx`.
 func (tx ServiceTx) Hash() (crypto.Hash, error) {
 	if tx.signedTx != nil {
 		return crypto.Hash{}.FromData(tx.signedTx), nil
+	}
+
+	if tx.Signature == nil {
+		return crypto.Hash{}, errors.New("transaction not signed")
 	}
 
 	data, err := tx.Serialize()
@@ -174,12 +185,10 @@ func (tx ServiceTx) Hash() (crypto.Hash, error) {
 
 // IntoSignedTx signs serialized `ServiceTx` with passed key, attach signature and encode to hex.
 func (tx *ServiceTx) IntoSignedTx(key crypto.SecretKey) (string, error) {
-	data, err := tx.Serialize()
+	_, err := tx.Sign(key)
 	if err != nil {
 		return "", err
 	}
 
-	data = append(data, key.Sign(data)...)
-	tx.signedTx = data
-	return hex.EncodeToString(data), nil
+	return hex.EncodeToString(tx.signedTx), nil
 }

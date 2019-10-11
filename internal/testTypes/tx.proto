@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package main;
+
+message Transfer {
+    string from =1;
+    string to = 2;
+    uint64 amount = 3;
+    uint64 seed = 4;
+}
