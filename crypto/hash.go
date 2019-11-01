@@ -48,7 +48,7 @@ func (Hash) FromString(raw string) (Hash, error) {
 }
 
 // MarshalJSON convert `Hash` into hex string and than into json.
-func (key *Hash) MarshalJSON() ([]byte, error) {
+func (key Hash) MarshalJSON() ([]byte, error) {
 	return json.Marshal(key.Encode())
 }
 

@@ -61,10 +61,10 @@ func TestServiceTx_DecodeSignedTx(t *testing.T) {
 	assert.Equal(t, uint16(ServiceId), exonumTx.ServiceID)
 	assert.Equal(t, uint16(1), exonumTx.MessageID)
 
-	assert.Equal(t, expectedSchema, exonumTx.Message.schema)
-	assert.Equal(t, systemPk.String(), exonumTx.Message.author.String())
-	assert.Equal(t, TransactionClass, int(exonumTx.Message.class))
-	assert.Equal(t, TransactionClass, int(exonumTx.Message.messageType))
+	assert.Equal(t, expectedSchema, exonumTx.Message.Schema)
+	assert.Equal(t, systemPk.String(), exonumTx.Message.Author.String())
+	assert.Equal(t, TransactionClass, int(exonumTx.Message.Class))
+	assert.Equal(t, TransactionClass, int(exonumTx.Message.MessageType))
 
 	_, err = ServiceTx{}.DecodeSignedTx(SystemTx[0:12], schema)
 	assert.Error(t, err)

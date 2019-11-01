@@ -46,7 +46,7 @@ func (SecretKey) FromString(raw string) (SecretKey, error) {
 }
 
 // MarshalJSON convert `SecretKey` into hex string and than into json.
-func (key *SecretKey) MarshalJSON() ([]byte, error) {
+func (key SecretKey) MarshalJSON() ([]byte, error) {
 	return json.Marshal(key.Encode())
 }
 
@@ -161,7 +161,7 @@ func (key *PublicKey) UnmarshalJSON(data []byte) error {
 }
 
 // MarshalJSON convert `PublicKey` into hex string and than into json.
-func (key *PublicKey) MarshalJSON() ([]byte, error) {
+func (key PublicKey) MarshalJSON() ([]byte, error) {
 	return json.Marshal(key.Encode())
 }
 
@@ -240,7 +240,7 @@ func (Signature) FromString(raw string) (Signature, error) {
 }
 
 // MarshalJSON convert `Signature` into hex string and than into json.
-func (key *Signature) MarshalJSON() ([]byte, error) {
+func (key Signature) MarshalJSON() ([]byte, error) {
 	return json.Marshal(key.Encode())
 }
 

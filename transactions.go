@@ -37,27 +37,21 @@ type Schema interface {
 	String() string
 	ProtoMessage()
 	Descriptor() ([]byte, []int)
-
-	XXX_Unmarshal(b []byte) error
-	XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
-	XXX_Merge(src proto.Message)
-	XXX_Size() int
-	XXX_DiscardUnknown()
 }
 
 type Message struct {
-	schema      Schema
-	author      crypto.PublicKey
-	class       uint8
-	messageType uint8
+	Schema      Schema
+	Author      crypto.PublicKey
+	Class       uint8
+	MessageType uint8
 }
 
 func newTxMessage(schema Schema, author crypto.PublicKey) Message {
-	return Message{schema: schema, author: author, class: TransactionClass, messageType: TransactionType}
+	return Message{Schema: schema, Author: author, Class: TransactionClass, MessageType: TransactionType}
 }
 
 func newPrecomitMessage(schema Schema, author crypto.PublicKey) Message {
-	return Message{schema: schema, author: author, class: PreCommitClass, messageType: PreCommitType}
+	return Message{Schema: schema, Author: author, Class: PreCommitClass, MessageType: PreCommitType}
 }
 
 type ServiceTx struct {
@@ -84,11 +78,11 @@ func (tx *ServiceTx) Serialize() ([]byte, error) {
 	binary.LittleEndian.PutUint16(midBytes, tx.MessageID)
 
 	buf := make([]byte, 0)
-	buf = append(tx.author.Data, tx.class)
-	buf = append(buf, tx.messageType)
+	buf = append(tx.Author.Data, tx.Class)
+	buf = append(buf, tx.MessageType)
 	buf = append(buf, sidBytes...)
 	buf = append(buf, midBytes...)
-	bytes, err := proto.Marshal(tx.schema)
+	bytes, err := proto.Marshal(tx.Schema)
 	if err != nil {
 		return nil, err
 	}
@@ -102,6 +96,14 @@ func (tx *ServiceTx) Serialize() ([]byte, error) {
 }
 
 func (ServiceTx) DecodeSignedTx(rawTx string, schema Schema) (ServiceTx, error) {
+	return ServiceTx{}.DecodeSignedWSchemaProvider(rawTx, func(uint16, uint16) (schema Schema, e error) {
+		return schema, nil
+	})
+}
+
+// DecodeSignedWSchemaProvider ...
+// SchemaProvider should return Schema implementation based on serviceID and messageID.
+func (ServiceTx) DecodeSignedWSchemaProvider(rawTx string, provider func(uint16, uint16) (Schema, error)) (ServiceTx, error) {
 	txBytes, err := hex.DecodeString(rawTx)
 	if err != nil {
 		return ServiceTx{}, err
@@ -121,8 +123,14 @@ func (ServiceTx) DecodeSignedTx(rawTx string, schema Schema) (ServiceTx, error) 
 
 	class := data[32:33]
 	messageType := data[33:34]
-	sidBytes := data[34:36]
-	midBytes := data[36:38]
+
+	serviceID := binary.LittleEndian.Uint16(data[34:36])
+	messageID := binary.LittleEndian.Uint16(data[36:38])
+
+	schema, err := provider(serviceID, messageID)
+	if err != nil {
+		return ServiceTx{}, err
+	}
 
 	err = proto.Unmarshal(data[38:], schema)
 	if err != nil {
@@ -130,10 +138,10 @@ func (ServiceTx) DecodeSignedTx(rawTx string, schema Schema) (ServiceTx, error) 
 	}
 
 	message := Message{
-		schema:      schema,
-		author:      authorPk,
-		class:       uint8(class[0]),
-		messageType: uint8(messageType[0]),
+		Schema:      schema,
+		Author:      authorPk,
+		Class:       uint8(class[0]),
+		MessageType: uint8(messageType[0]),
 	}
 
 	signature, err := crypto.Signature{}.FromString(hex.EncodeToString(signatureByte))
@@ -143,8 +151,8 @@ func (ServiceTx) DecodeSignedTx(rawTx string, schema Schema) (ServiceTx, error) 
 
 	return ServiceTx{
 		Message:   message,
-		ServiceID: binary.LittleEndian.Uint16(sidBytes),
-		MessageID: binary.LittleEndian.Uint16(midBytes),
+		ServiceID: serviceID,
+		MessageID: messageID,
 		Signature: signature,
 	}, nil
 }
