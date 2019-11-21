@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/inn4science/exonum-go/crypto"
-
 	"github.com/stretchr/testify/assert"
 )
 

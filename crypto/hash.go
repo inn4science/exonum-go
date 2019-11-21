@@ -22,7 +22,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-
 	"github.com/inn4science/exonum-go/types"
 )
 
@@ -67,6 +66,8 @@ func (key *Hash) Scan(src interface{}) error {
 	switch v := src.(type) {
 	case string:
 		return key.Decode(v)
+	case nil:
+		return nil
 	}
 	return errors.New("hash: invalid type")
 }
