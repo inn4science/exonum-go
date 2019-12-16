@@ -96,7 +96,7 @@ func (tx *ServiceTx) Serialize() ([]byte, error) {
 }
 
 func (ServiceTx) DecodeSignedTx(rawTx string, schema Schema) (ServiceTx, error) {
-	return ServiceTx{}.DecodeSignedWSchemaProvider(rawTx, func(uint16, uint16) (schema Schema, e error) {
+	return ServiceTx{}.DecodeSignedWSchemaProvider(rawTx, func(uint16, uint16) (Schema, error) {
 		return schema, nil
 	})
 }
